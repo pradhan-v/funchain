@@ -169,7 +169,7 @@
         "no-new-wrappers": 1,                   // disallow new operators with the String, Number, and Boolean objects
         "no-octal": 1,                          // disallow octal literals
         "no-octal-escape": 1,                   // disallow octal escape sequences in string literals
-        "no-param-reassign": 1,                 // disallow reassigning function parameters
+        "no-param-reassign": 2,                 // disallow reassigning function parameters
         "no-proto": 1,                          // disallow the use of the __proto__ property
         "no-redeclare": 1,                      // disallow variable redeclaration
         "no-restricted-properties": 1,          // disallow certain properties on certain objects
@@ -258,7 +258,7 @@
         "jsx-quotes": 1,                        // enforce the consistent use of either double or single quotes in JSX attributes
         "key-spacing": 1,                       // enforce consistent spacing between keys and values in object literal properties
         "keyword-spacing": 1,                   // enforce consistent spacing before and after keywords
-        "line-comment-position": 1,             // enforce position of line comments
+        "line-comment-position": 0,             // enforce position of line comments
         "linebreak-style": 1,                   // enforce consistent linebreak style
         "lines-around-comment": 1,              // require empty lines around comments
         "lines-between-class-members":
@@ -271,7 +271,7 @@
                     }],                         // enforce a maximum line length
         "max-lines": 1,                         // enforce a maximum number of lines per file
         "max-nested-callbacks": 1,              // enforce a maximum depth that callbacks can be nested
-        "max-params": 1,                        // enforce a maximum number of parameters in function definitions
+        "max-params": 0,                        // enforce a maximum number of parameters in function definitions
         "max-statements": 0,                    // enforce a maximum number of statements allowed in function blocks
         "max-statements-per-line": 1,           // enforce a maximum number of statements allowed per line
         "multiline-comment-style": 0,           // enforce a particular style for multiline comments
@@ -282,7 +282,7 @@
         "no-array-constructor": 1,              // disallow Array constructors
         "no-bitwise": 1,                        // disallow bitwise operators
         "no-continue": 1,                       // disallow continue statements
-        "no-inline-comments": 1,                // disallow inline comments after code
+        "no-inline-comments": 0,                // disallow inline comments after code
         "no-lonely-if": 1,                      // disallow if statements as the only statement in else blocks
         "no-mixed-operators": 1,                // disallow mixed binary operators
         "no-mixed-spaces-and-tabs": 1,          // disallow mixed spaces and tabs for indentation
@@ -291,7 +291,7 @@
         "no-negated-condition": 1,              // disallow negated conditions
         "no-nested-ternary": 1,                 // disallow nested ternary expressions
         "no-new-object": 1,                     // disallow Object constructors
-        "no-plusplus": 1,                       // disallow the unary operators ++ and --
+        "no-plusplus": 0,                       // disallow the unary operators ++ and --
         "no-restricted-syntax": 1,              // disallow specified syntax
         "no-tabs": 1,                           // disallow all tabs
         "no-ternary": 1,                        // disallow ternary operators
