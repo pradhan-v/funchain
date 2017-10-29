@@ -93,7 +93,9 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
 //
 const create = function (functionArray, callback, ...args) {
     const fchain = new Chain(functionArray, callback);
-    fchain.setFunctionArgs(args);
+    if (args.length !== 0) {
+        fchain.setFunctionArgs(args);
+    }
     return fchain;
 };
 const createWithDelay = function (delay, functionArray, callback, ...args) {

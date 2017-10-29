@@ -29,20 +29,30 @@ const noReturnValueNoArgs = () => {
 };
 //
 /* eslint no-invalid-this: 0 */
+/* eslint no-undefined: 0 */
 // returns an array [functionArray, callback], this is passed to the create chain function
 const getCreateArgs = function (done, fdelay, args) {
     let createargs = [];
     if (fdelay) {
         createargs.push(fdelay);
-    }
+    } /* else if (this._functionArray) {
+        createargs.push(undefined);
+    }*/
+    // dont add undefined for missing delay.
+    // this method is called by create chain without delay too.
     if (this._functionArray) {
         createargs.push(this._functionArray);
+    } else if (!this.noCallback) {
+        createargs.push(undefined);
     }
     if (!this.noCallback) {
         createargs.push((finalVal) => {
             expect(this.expected).to.equal(finalVal);
             done();
         });
+    } else if (args) {
+        createargs.push(undefined);
+        createargs.push(undefined);
     }
     if (args) {
         // createargs.push(...args);
@@ -50,6 +60,7 @@ const getCreateArgs = function (done, fdelay, args) {
     }
     return createargs;
 };
+const ERROR = new Error('Some Error');
 // TODO: add destructive test case.. send non-functions in the function array (string, int...)
 const tests = [
     {
@@ -65,6 +76,27 @@ const tests = [
         '_functionArray': [addNextCharWrap, addNextCharWrap, addNextCharWrap],
         getCreateArgs,
         'expected': 'abcd',
+        'functionArgs': ['a']
+    }, {
+        'description': 'function has error',
+        '_functionArray': [
+            addNextCharWrap, () => {
+                throw ERROR;
+            }, addNextCharWrap
+        ],
+        getCreateArgs,
+        'expected': ERROR,
+        'functionArgs': ['a']
+    }, {
+        'description': 'function has error, no callback',
+        '_functionArray': [
+            addNextCharWrap, () => {
+                throw ERROR;
+            }, addNextCharWrap
+        ],
+        getCreateArgs,
+        'noCallback': true,
+        'expected': ERROR,
         'functionArgs': ['a']
     }, {
         'description': 'check no return values',
@@ -91,10 +123,19 @@ const tests = [
         getCreateArgs,
         'expected': 'abcd',
         'functionArgs': ['p']
+    }, {
+        'description': 'function returns another chain, with functions having own args',
+        '_functionArray': [
+            addNextCharWrap, addNextCharWrap,
+            () => chain.create([addNextCharWrap, addNextCharWrap], () => {}, 'l'),
+            addNextCharWrap, addNextCharWrap
+        ],
+        getCreateArgs,
+        'expected': 'lmnop',
+        'functionArgs': ['o']
     }
 ];
 /* eslint no-magic-numbers:0 */
-// TODO: add variants for create with delay, create with function args during create
 describe('#tests, args while start', () => {
     tests.forEach((test) => {
         it(test.description, (done) => {
@@ -141,7 +182,6 @@ describe('#tests, args while create', () => {
         if (test.getCreateArgs && test.functionArgs) {
             it(test.description, (done) => {
                 let fchain = null;
-                /* eslint no-undefined: 0 */
                 fchain = chain.create(...test.getCreateArgs(done, undefined, test.functionArgs));
                 fchain.startCalls();
                 if (test.noCallback) {
@@ -156,9 +196,7 @@ describe('#tests, args while create, with delay', () => {
         // other cases are covered already before
         if (test.getCreateArgs && test.functionArgs) {
             it(test.description, (done) => {
-                let fchain = null;
-                /* eslint no-undefined: 0 */
-                fchain = chain.createWithDelay(...test.getCreateArgs(done, delay, test.functionArgs));
+                const fchain = chain.createWithDelay(...test.getCreateArgs(done, delay, test.functionArgs));
                 fchain.startCalls();
                 if (test.noCallback) {
                     done();
@@ -167,6 +205,20 @@ describe('#tests, args while create, with delay', () => {
         }
     });
 });
+describe('#tests, args while start and create, with delay', () => {
+    tests.forEach((test) => {
+        if (test.getCreateArgs && test.functionArgs) {
+            it(test.description, (done) => {
+                const fchain = chain.createWithDelay(...test.getCreateArgs(done, delay, test.functionArgs));
+                fchain.startCalls(...test.functionArgs);
+                if (test.noCallback) {
+                    done();
+                }
+            });
+        }
+    });
+});
+
 describe('#chain', () => {
     it('use set functions', (done) => {
         const fchain = chain.create();
@@ -237,6 +289,53 @@ describe('#repeat()', () => {
     it('repeat function call', (done) => {
         const fc = chain.createRepeatFunctionChain(addOneWrap, (error, result) => result !== 100, (finalVal) => {
             expect(finalVal).to.equal(100);
+            done();
+        }, 0);
+        fc.startCalls();
+    });
+    it('repeat function call, no continue callback function', (done) => {
+        const fc = chain.createRepeatFunctionChain(addOneWrap, undefined, (finalVal) => {
+            expect(finalVal).to.equal(1);
+            done();
+        }, 0);
+        fc.startCalls();
+    });
+    it('repeat function call, function throws error, dont continue', (done) => {
+        globalObject.value = 0;
+        const fc = chain.createRepeatFunctionChain((num, result) => {
+            if (result === 3) {
+                throw ERROR;
+            }
+            return addOneWrap(num, result);
+        }, (error) => error === null, (finalVal) => {
+            expect(finalVal).to.equal(3);
+            done();
+        }, 0);
+        fc.startCalls();
+    });
+    it('repeat function call, function throws error, no continue callback function', (done) => {
+        globalObject.value = 0;
+        const fc = chain.createRepeatFunctionChain((num, result) => {
+            if (result === 3) {
+                throw ERROR;
+            }
+            return addOneWrap(num, result);
+        }, undefined, (finalVal) => {
+            expect(finalVal).to.equal(1);
+            done();
+        }, 0);
+        fc.startCalls();
+    });
+    it('repeat function call, function throws error, continue', (done) => {
+        globalObject.value = 0;
+        const fc = chain.createRepeatFunctionChain((num, result) => {
+            globalObject.value += 1;
+            if (globalObject.value === 2) {
+                throw ERROR;
+            }
+            return addOneWrap(num, result);
+        }, (error, result) => result !== 8, (finalVal) => {
+            expect(finalVal).to.equal(8);
             done();
         }, 0);
         fc.startCalls();

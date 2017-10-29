@@ -3,24 +3,21 @@
 const chain = require('./chain');
 //
 const repeatFunction = function (actualFunction, continueCallback, ...args) {
-    let result = null;
+    // set result to the previous result
+    let [result] = args.slice(-1);
+    let repeat = false;
+    let error = null;
     try {
         result = actualFunction(...args);
     } catch (err) {
-        if (continueCallback) {
-            // TODO: use the callback and decide to stop.
-            continueCallback(err, result);
-        }
+        error = err;
     }
-    let repeat = false;
     if (continueCallback) {
-        repeat = continueCallback(null, result);
+        repeat = continueCallback(error, result);
     }
     if (repeat) {
         const fcc = chain.create();
         fcc.setFunctions([repeatFunction]);
-        // args.unshift(actualFunction);
-        // fcc.setFunctionArgs([actualFunction, continueCallback, resultCallback].concat(result));
         fcc.setFunctionArgs([result]);
         return fcc;
     }
@@ -28,10 +25,7 @@ const repeatFunction = function (actualFunction, continueCallback, ...args) {
 };
 //
 const createRepeatFunctionChain = function (actualFunction, continueCallback, resultCallback, ...args) {
-    const fchain = chain.createWithDelay(
-        -1, [repeatFunction], resultCallback,
-        actualFunction, continueCallback, ...args
-    );
+    const fchain = chain.create([repeatFunction], resultCallback, actualFunction, continueCallback, ...args);
     return fchain;
 };
 //
