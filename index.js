@@ -28,7 +28,7 @@ const repeatFunction = function (actualFunction, continueCallback, ...args) {
 };
 //
 const createRepeatFunctionChain = function (actualFunction, continueCallback, resultCallback, ...args) {
-    const fchain = chain.create(
+    const fchain = chain.createWithDelay(
         -1, [repeatFunction], resultCallback,
         actualFunction, continueCallback, ...args
     );
@@ -37,6 +37,7 @@ const createRepeatFunctionChain = function (actualFunction, continueCallback, re
 //
 module.exports = {
     'create': chain.create,
+    'createWithDelay': chain.createWithDelay,
     createRepeatFunctionChain,
     repeatFunction
 };

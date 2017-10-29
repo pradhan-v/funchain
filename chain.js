@@ -1,12 +1,6 @@
 'use strict';
 //
-const Chain = function Chain (delay, functionArray, callback) {
-    if (!(this instanceof Chain)) {
-        return new Chain(delay, functionArray);
-    }
-    if (delay) {
-        this.setDelay(delay);
-    }
+const Chain = function Chain (functionArray, callback) {
     if (functionArray) {
         this.setFunctions(functionArray);
     }
@@ -56,7 +50,7 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
         fnReturnValue = functions[0].apply(functions[0], args);
     } catch (err) {
         if (this._callback) {
-            this._callback.apply(this._callback, err);
+            this._callback(err);
         }
         return;
     }
@@ -97,10 +91,18 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
     }
 };
 //
-const create = function (delay, functionArray, callback, ...args) {
-    const fchain = new Chain(delay, functionArray, callback);
+const create = function (functionArray, callback, ...args) {
+    const fchain = new Chain(functionArray, callback);
     fchain.setFunctionArgs(args);
     return fchain;
 };
+const createWithDelay = function (delay, functionArray, callback, ...args) {
+    const fchain = create(functionArray, callback, ...args);
+    fchain.setDelay(delay);
+    return fchain;
+};
 //
-module.exports = {create};
+module.exports = {
+    create,
+    createWithDelay
+};

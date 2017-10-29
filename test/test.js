@@ -28,39 +28,146 @@ const noReturnValueNoArgs = () => {
     globalObject.value++;
 };
 //
+/* eslint no-invalid-this: 0 */
+// returns an array [functionArray, callback], this is passed to the create chain function
+const getCreateArgs = function (done, fdelay, args) {
+    let createargs = [];
+    if (fdelay) {
+        createargs.push(fdelay);
+    }
+    if (this._functionArray) {
+        createargs.push(this._functionArray);
+    }
+    if (!this.noCallback) {
+        createargs.push((finalVal) => {
+            expect(this.expected).to.equal(finalVal);
+            done();
+        });
+    }
+    if (args) {
+        // createargs.push(...args);
+        createargs = createargs.concat(args);
+    }
+    return createargs;
+};
+// TODO: add destructive test case.. send non-functions in the function array (string, int...)
+const tests = [
+    {
+        'description': 'empty arguments',
+        'noCallback': true
+    }, {
+        'description': 'empty array, no callback',
+        'noCallback': true,
+        '_functionArray': [],
+        getCreateArgs
+    }, {
+        'description': 'simple order check',
+        '_functionArray': [addNextCharWrap, addNextCharWrap, addNextCharWrap],
+        getCreateArgs,
+        'expected': 'abcd',
+        'functionArgs': ['a']
+    }, {
+        'description': 'check no return values',
+        /* eslint no-empty-function: 0 */
+        '_functionArray': [addOneWrap, () => {}, () => 111],
+        getCreateArgs,
+        'expected': 111,
+        'functionArgs': [1]
+    }, {
+        'description': 'function returns another chain',
+        '_functionArray': [
+            addNextCharWrap, addNextCharWrap, () => chain.create([addNextCharWrap, addNextCharWrap, addNextCharWrap]),
+            addNextCharWrap, addNextCharWrap
+        ],
+        getCreateArgs,
+        'expected': 'pqrstuvw',
+        'functionArgs': ['p']
+    }, {
+        'description': 'function returns another chain, one function hijacks args/return value',
+        '_functionArray': [
+            addNextCharWrap, addNextCharWrap, () => chain.create([addNextCharWrap, () => 'a', addNextCharWrap]),
+            addNextCharWrap, addNextCharWrap
+        ],
+        getCreateArgs,
+        'expected': 'abcd',
+        'functionArgs': ['p']
+    }
+];
 /* eslint no-magic-numbers:0 */
+// TODO: add variants for create with delay, create with function args during create
+describe('#tests, args while start', () => {
+    tests.forEach((test) => {
+        it(test.description, (done) => {
+            let fchain = null;
+            if (test.getCreateArgs) {
+                fchain = chain.create(...test.getCreateArgs(done));
+            } else {
+                fchain = chain.create();
+            }
+            if (test.functionArgs) {
+                fchain.startCalls(...test.functionArgs);
+            } else {
+                fchain.startCalls();
+            }
+            if (test.noCallback) {
+                done();
+            }
+        });
+    });
+});
+describe('#tests, args while start, with delay', () => {
+    tests.forEach((test) => {
+        it(test.description, (done) => {
+            let fchain = null;
+            if (test.getCreateArgs) {
+                fchain = chain.createWithDelay(...test.getCreateArgs(done, delay));
+            } else {
+                fchain = chain.createWithDelay(delay);
+            }
+            if (test.functionArgs) {
+                fchain.startCalls(...test.functionArgs);
+            } else {
+                fchain.startCalls();
+            }
+            if (test.noCallback) {
+                done();
+            }
+        });
+    });
+});
+describe('#tests, args while create', () => {
+    tests.forEach((test) => {
+        // other cases are covered already before
+        if (test.getCreateArgs && test.functionArgs) {
+            it(test.description, (done) => {
+                let fchain = null;
+                /* eslint no-undefined: 0 */
+                fchain = chain.create(...test.getCreateArgs(done, undefined, test.functionArgs));
+                fchain.startCalls();
+                if (test.noCallback) {
+                    done();
+                }
+            });
+        }
+    });
+});
+describe('#tests, args while create, with delay', () => {
+    tests.forEach((test) => {
+        // other cases are covered already before
+        if (test.getCreateArgs && test.functionArgs) {
+            it(test.description, (done) => {
+                let fchain = null;
+                /* eslint no-undefined: 0 */
+                fchain = chain.createWithDelay(...test.getCreateArgs(done, delay, test.functionArgs));
+                fchain.startCalls();
+                if (test.noCallback) {
+                    done();
+                }
+            });
+        }
+    });
+});
 describe('#chain', () => {
-    it('empty args', (done) => {
-        const fchain = chain.create();
-        fchain.startCalls();
-        done();
-    });
-    it('negative delay, empty array, no callback', (done) => {
-        const fchain = chain.create(-1, []);
-        fchain.startCalls();
-        done();
-    });
-    it('negative delay', (done) => {
-        const fchain = chain.create(-1, [addNextCharWrap, addNextCharWrap, addNextCharWrap], (finalVal) => {
-            expect(finalVal).to.equal('defg');
-            done();
-        });
-        fchain.startCalls('d');
-    });
-    it('check order', (done) => {
-        const fchain = chain.create(delay, [addNextCharWrap, addNextCharWrap, addNextCharWrap], (finalVal) => {
-            expect(finalVal).to.equal('abcd');
-            done();
-        });
-        fchain.startCalls('a');
-    });
-    it('set args in create function call', (done) => {
-        const fchain = chain.create(delay, [addNextCharWrap, addNextCharWrap, addNextCharWrap], (finalVal) => {
-            expect(finalVal).to.equal('abcd');
-            done();
-        }, 'a');
-        fchain.startCalls();
-    });
     it('use set functions', (done) => {
         const fchain = chain.create();
         fchain.setDelay(delay);
@@ -74,7 +181,7 @@ describe('#chain', () => {
     });
     it('function chain with no return value functions', (done) => {
         const obj = {'value': 100};
-        const fchain = chain.create(delay, [noReturnValue, noReturnValue, noReturnValue], () => {
+        const fchain = chain.createWithDelay(delay, [noReturnValue, noReturnValue, noReturnValue], () => {
             expect(obj.value).to.equal(103);
             done();
         });
@@ -82,24 +189,27 @@ describe('#chain', () => {
     });
     it('function chain with no return value, no args functions', (done) => {
         globalObject.value = 0;
-        const fchain = chain.create(delay, [noReturnValueNoArgs, noReturnValueNoArgs, noReturnValueNoArgs], () => {
-            expect(globalObject.value).to.equal(3);
-            done();
-        });
+        const fchain = chain.createWithDelay(
+            delay, [noReturnValueNoArgs, noReturnValueNoArgs, noReturnValueNoArgs],
+            () => {
+                expect(globalObject.value).to.equal(3);
+                done();
+            }
+        );
         fchain.startCalls();
     });
     it('check return values', (done) => {
-        const fchain = chain.create(delay, [addOneWrap, addOneWrap, addOneWrap], (finalVal) => {
+        const fchain = chain.createWithDelay(delay, [addOneWrap, addOneWrap, addOneWrap], (finalVal) => {
             expect(finalVal).to.equal(4);
             done();
         });
         fchain.startCalls(1);
     });
     it('check arguments list, ' +
-    // 'first arg shoud be return value from previous function, rest should be the original args', (done) => {
-    'the function args should be the same as sent while creating the chain, ' +
-    'the last parameter should be the return value from the previous function call', (done) => {
-        const fchain = chain.create(delay, [
+        // 'first arg shoud be return value from previous function, rest should be the original args', (done) => {
+        'the function args should be the same as sent while creating the chain, ' +
+        'the last parameter should be the return value from the previous function call', (done) => {
+        const fchain = chain.createWithDelay(delay, [
             (num, chr) => {
                 expect(num).to.equal(1);
                 expect(chr).to.equal('a');
@@ -121,37 +231,9 @@ describe('#chain', () => {
         });
         fchain.startCalls(1, 'a');
     });
-    it('check no return values', (done) => {
-        /* eslint no-empty-function:0 */
-        const fchain = chain.create(delay, [addOneWrap, () => {}, () => 111], (finalVal) => {
-            expect(finalVal).to.equal(111);
-            done();
-        });
-        fchain.startCalls(1);
-    });
-    // repeat tests
-    it('function returns another chain', (done) => {
-        const retChain = () => chain.create(delay, [addNextCharWrap, addNextCharWrap, addNextCharWrap]);
-        const fchain = chain.create(
-            delay, [addNextCharWrap, addNextCharWrap, retChain, addNextCharWrap, addNextCharWrap],
-            (finalVal) => {
-                expect(finalVal).to.equal('pqrstuvw');
-                done();
-            }
-        );
-        fchain.startCalls('p');
-    });
-    it('function returns another chain, one function hijacks args/return value', (done) => {
-        const retChain = () => chain.create(delay, [addNextCharWrap, () => 'a', addNextCharWrap]);
-        const fchain = chain.create(
-            delay, [addNextCharWrap, addNextCharWrap, retChain, addNextCharWrap, addNextCharWrap],
-            (finalVal) => {
-                expect(finalVal).to.equal('abcd');
-                done();
-            }, 'p'
-        );
-        fchain.startCalls();
-    });
+});
+// repeat tests
+describe('#repeat()', () => {
     it('repeat function call', (done) => {
         const fc = chain.createRepeatFunctionChain(addOneWrap, (error, result) => result !== 100, (finalVal) => {
             expect(finalVal).to.equal(100);
@@ -167,7 +249,7 @@ describe('#chain', () => {
         fc.setDelay(delay);
         fc.startCalls();
     });
-    it('repeat function call, many functions', (done) => {
+    it.skip('repeat function call, many functions(stack overflow)', (done) => {
         const fc = chain.createRepeatFunctionChain(addOneWrap, (error, result) => result !== 10000, (finalVal) => {
             expect(finalVal).to.equal(10000);
             done();

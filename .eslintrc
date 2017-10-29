@@ -1,15 +1,14 @@
 {
-    // eslintrc-generator : http://rapilabs.github.io/eslintrc-generator/
-    // eslint-config :
-    //    https://github.com/sindresorhus/eslint-config-xo/blob/master/index.js
-    //    https://github.com/google/eslint-config-google/blob/master/index.js
-    //
     // Template downloaded from : https://raw.githubusercontent.com/i-ron-y/eslintrc-starter-files/master/.eslintrc.json
     // Updated on 2017-10-20.
     //
     // ESLint docs -- Configuring ESLint:      https://eslint.org/docs/user-guide/configuring
     // ESLint docs -- List of available rules: https://eslint.org/docs/rules/
-
+    // eslintrc-generator : http://rapilabs.github.io/eslintrc-generator/
+    // eslint-config :
+    //    https://github.com/sindresorhus/eslint-config-xo/blob/master/index.js
+    //    https://github.com/google/eslint-config-google/blob/master/index.js
+    //
     "parserOptions": {
 
         "ecmaVersion": 6,                       // set to 3, 5 (default), 6, 7, or 8 to specify the version of ECMAScript syntax you want to use.
@@ -319,7 +318,7 @@
         "semi": 1,                              // require or disallow semicolons instead of ASI
         "semi-spacing": 1,                      // enforce consistent spacing before and after semicolons
         "semi-style": 1,                        // enforce location of semicolons
-        "sort-keys": 1,                         // require object keys to be sorted
+        "sort-keys": 0,                         // require object keys to be sorted
         "sort-vars": 1,                         // require variables within the same declaration block to be sorted
         "space-before-blocks": 1,               // enforce consistent spacing before blocks
         "space-before-function-paren": 1,       // enforce consistent spacing before function definition opening parenthesis
