@@ -220,6 +220,21 @@ describe('#tests, args while start and create, with delay', () => {
 });
 
 describe('#chain', () => {
+    it('no delay, return from function', (done) => {
+        const val = chain.create([() => {}, () => {}, () => 100]).startCalls();
+        expect(val).to.equal(100);
+        done();
+    });
+    it('no delay, return from function 2', (done) => {
+        const val = chain.create([() => 1, () => {}, () => 101]).startCalls();
+        expect(val).to.equal(101);
+        done();
+    });
+    it('no delay, return from function 3', (done) => {
+        const val = chain.create([addNextCharWrap, addNextCharWrap, addNextCharWrap]).startCalls('j');
+        expect(val).to.equal('jklm');
+        done();
+    });
     it('use set functions', (done) => {
         const fchain = chain.create();
         fchain.setDelay(delay);
@@ -286,12 +301,17 @@ describe('#chain', () => {
 });
 // repeat tests
 describe('#repeat()', () => {
-    it('repeat function call', (done) => {
+    it('repeat function call, check final value in callback', (done) => {
         const fc = chain.createRepeatFunctionChain(addOneWrap, (error, result) => result !== 100, (finalVal) => {
             expect(finalVal).to.equal(100);
             done();
         }, 0);
         fc.startCalls();
+    });
+    it.skip('repeat function call, check final returned value.', () => {
+        const fc = chain.createRepeatFunctionChain(addOneWrap, (error, result) => result !== 100);
+        const val = fc.startCalls(0);
+        expect(val).to.equal(100);
     });
     it('repeat function call, no continue callback function', (done) => {
         const fc = chain.createRepeatFunctionChain(addOneWrap, undefined, (finalVal) => {

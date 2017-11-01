@@ -42,7 +42,7 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
         if (this._callback) {
             this._callback(previousResult);
         }
-        return;
+        return previousResult;
     }
     let fnReturnValue = null;
     try {
@@ -52,7 +52,7 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
         if (this._callback) {
             this._callback(err);
         }
-        return;
+        return previousResult;
     }
     // remove the invoked function from the array
     const nextFunctions = functions.slice(1);
@@ -87,8 +87,9 @@ Chain.prototype._callFunctions = function (delay, functions, ...args) {
         }, delay);
     } else {
         // TODO: fix stackoverflow
-        that._callFunctions(...callargs);
+        fnReturnValue = that._callFunctions(...callargs);
     }
+    return fnReturnValue;
 };
 //
 const create = function (functionArray, callback, ...args) {
